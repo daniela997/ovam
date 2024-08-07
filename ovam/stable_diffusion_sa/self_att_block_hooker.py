@@ -66,11 +66,11 @@ class SelfAttentionHooker(BlockHooker):
             if not USE_PEFT_BACKEND
             else attn.to_k(encoder_hidden_states)
         )
-        # value = (
-        #     attn.to_v(encoder_hidden_states, scale=scale)
-        #     if not USE_PEFT_BACKEND
-        #     else attn.to_v(encoder_hidden_states)
-        # )
+        value = (
+            attn.to_v(encoder_hidden_states, scale=scale)
+            if not USE_PEFT_BACKEND
+            else attn.to_v(encoder_hidden_states)
+        )
 
         inner_dim = key.shape[-1]
         head_dim = inner_dim // attn.heads
@@ -79,19 +79,19 @@ class SelfAttentionHooker(BlockHooker):
         query = query.view(batch_size, -1, attn.heads, head_dim).transpose(1, 2)
 
         key = key.view(batch_size, -1, attn.heads, head_dim).transpose(1, 2)
-        # value = value.view(batch_size, -1, attn.heads, head_dim).transpose(1, 2)
-
+        value = value.view(batch_size, -1, attn.heads, head_dim).transpose(1, 2)
         # Makes a ones matrix with the same shape than value
-        dummy_value = torch.ones_like(key)
+        #dummy_value = torch.ones_like(key)
 
         hidden_states = F.scaled_dot_product_attention(
             query,
             key,
-            dummy_value,
+            value,
             attn_mask=attention_mask,
             dropout_p=0.0,
             is_causal=False,
         )
+        hk_self._current_hidden_state.append(hidden_states)
         hidden_states = hidden_states.sum(axis=0).sum(axis=-1)
 
         spatial_dimension = int(math.sqrt(hidden_states.shape[-1]))
@@ -99,6 +99,6 @@ class SelfAttentionHooker(BlockHooker):
             (-1, spatial_dimension, spatial_dimension)
         )
 
-        hk_self._current_hidden_state.append(hidden_states)
+#         hk_self._current_hidden_state.append(hidden_states)
 
         return output
