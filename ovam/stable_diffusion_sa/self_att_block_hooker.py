@@ -82,6 +82,7 @@ class SelfAttentionHooker(BlockHooker):
         value = value.view(batch_size, -1, attn.heads, head_dim).transpose(1, 2)
         # Makes a ones matrix with the same shape than value
         #dummy_value = torch.ones_like(key)
+        #value = torch.ones((key.shape[0], key.shape[1], key.shape[2], key.shape[2]), device=key.device)
 
         hidden_states = F.scaled_dot_product_attention(
             query,
@@ -91,7 +92,9 @@ class SelfAttentionHooker(BlockHooker):
             dropout_p=0.0,
             is_causal=False,
         )
-        hk_self._current_hidden_state.append(hidden_states)
+
+        #hk_self._current_hidden_state.append(hidden_states)
+        hk_self._current_hidden_state.append(hidden_states.detach())
         hidden_states = hidden_states.sum(axis=0).sum(axis=-1)
 
         spatial_dimension = int(math.sqrt(hidden_states.shape[-1]))

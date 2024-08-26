@@ -102,6 +102,7 @@ class StableDiffusionDAAM(DAAMModule):
         # Interpolate all attentions to the same size
         attentions = []
         for att in attention:
+            print(att.shape)
             if att.shape[-2:] == block_latent_size:
                 # If the attention has the same size as the latent size, do nothing
                 attentions.append(att)
